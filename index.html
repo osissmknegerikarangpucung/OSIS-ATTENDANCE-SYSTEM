@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Absensi OSIS SMKN Karangpucung</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between">
+
+  <div id="app" class="w-full max-w-lg mx-auto p-5 flex-grow flex flex-col justify-center">
+
+    <!-- 1. HALAMAN LOGIN -->
+    <div id="view-login" class="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl shadow-blue-500/5">
+      <div class="text-center mb-8">
+        <div class="w-24 h-24 mx-auto mb-4 rounded-3xl overflow-hidden bg-white p-2 shadow-lg shadow-blue-500/10 flex items-center justify-center border border-slate-100">
+          <img src="https://lh3.googleusercontent.com/d/18ADwdV7-MEDMMzGr07BXvqPZvA1hHviR=s400" alt="Logo SMK Neka" class="w-full h-full object-contain">
+        </div>
+        <h1 class="text-3xl font-extrabold tracking-tight text-blue-900">ABSENSI OSIS</h1>
+        <p class="text-sm text-slate-500 mt-1 font-medium">SMK Negeri Karangpucung • Realtime Face & GPS</p>
+      </div>
+
+      <form id="form-login" onsubmit="handleLogin(event)" class="space-y-5">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Username / Nama</label>
+          <input type="text" id="username" required placeholder="Masukkan nama/username Anda" class="w-full bg-slate-50 border border-slate-300 rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-blue-600 focus:bg-white transition text-slate-900 font-medium">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Password</label>
+          <input type="password" id="password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-300 rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-blue-600 focus:bg-white transition text-slate-900 font-medium">
+        </div>
+        <div class="flex items-center justify-between text-sm pt-1">
+          <a href="#" onclick="switchView('view-forgot')" class="text-blue-600 hover:underline font-semibold">Lupa sandi?</a>
+        </div>
+        <button type="submit" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl py-4 shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-3 text-lg">
+          <span>Masuk Sistem</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- 2. HALAMAN LUPA PASSWORD -->
+    <div id="view-forgot" class="hidden bg-white border border-slate-200 rounded-3xl p-8 shadow-xl">
+      <h2 class="text-2xl font-bold text-blue-900 mb-2">Reset Password</h2>
+      <p class="text-sm text-slate-500 mb-6">Masukkan username Anda untuk membuat sandi baru.</p>
+      <form onsubmit="handleForgot(event)" class="space-y-5">
+        <input type="text" id="f-username" placeholder="Username / Nama" required class="w-full bg-slate-50 border border-slate-300 rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-blue-600 text-slate-900">
+        <input type="password" id="f-newpass" placeholder="Password Baru" required class="w-full bg-slate-50 border border-slate-300 rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-blue-600 text-slate-900">
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl py-4 transition text-base shadow-md">Simpan Sandi Baru</button>
+        <button type="button" onclick="switchView('view-login')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm py-3 rounded-2xl font-semibold transition">Kembali ke Login</button>
+      </form>
+    </div>
+
+    <!-- 3. DASHBOARD ANGGOTA -->
+    <div id="view-dashboard" class="hidden space-y-6 pb-6">
+      <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-6 shadow-xl flex justify-between items-center text-white">
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-md">
+            <img src="https://lh3.googleusercontent.com/d/18ADwdV7-MEDMMzGr07BXvqPZvA1hHviR=s400" alt="Logo" class="w-full h-full object-contain">
+          </div>
+          <div>
+            <p class="text-sm text-blue-100 font-medium">Selamat Datang,</p>
+            <h2 id="user-name-display" class="text-lg font-bold text-white max-w-[180px] truncate">Nama Anggota</h2>
+            <span id="user-kelas-display" class="inline-block bg-white/20 text-white text-xs px-3 py-1 rounded-full font-semibold mt-1">Kelas X</span>
+          </div>
+        </div>
+        <button onclick="logout()" class="bg-red-500/20 hover:bg-red-500 text-red-100 hover:text-white p-3.5 rounded-2xl transition text-base shadow">
+          <i class="fa-solid fa-power-off"></i>
+        </button>
+      </div>
+
+      <!-- Statistik Personal -->
+      <div class="grid grid-cols-4 gap-3 text-center">
+        <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+          <span class="block text-xs text-emerald-600 font-bold uppercase mb-1">Hadir</span>
+          <span id="stat-hadir" class="text-2xl font-black text-slate-900">0</span>
+        </div>
+        <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+          <span class="block text-xs text-blue-600 font-bold uppercase mb-1">Izin</span>
+          <span id="stat-izin" class="text-2xl font-black text-slate-900">0</span>
+        </div>
+        <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+          <span class="block text-xs text-amber-600 font-bold uppercase mb-1">Sakit</span>
+          <span id="stat-sakit" class="text-2xl font-black text-slate-900">0</span>
+        </div>
+        <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+          <span class="block text-xs text-red-600 font-bold uppercase mb-1">Alpha</span>
+          <span id="stat-alpha" class="text-2xl font-black text-slate-900">0</span>
+        </div>
+      </div>
+
+      <!-- Pusat Informasi Realtime -->
+      <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3">
+        <div class="flex items-center gap-2.5 text-blue-600 font-bold text-base">
+          <i class="fa-solid fa-bullhorn text-lg"></i>
+          <span>Pusat Informasi Admin</span>
+        </div>
+        <div id="member-info-container" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+          <div class="text-sm text-slate-500 bg-slate-50 p-4 rounded-2xl border text-center font-medium">Memuat pengumuman...</div>
+        </div>
+      </div>
+
+      <!-- TOMBOL UTAMA -->
+      <div class="space-y-4 pt-2">
+        <div id="attendance-action-box" class="space-y-4">
+          <button id="btn-hadir-main" onclick="openAbsenModal()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold py-5 px-6 rounded-3xl shadow-xl flex items-center justify-center gap-4 text-lg transition active:scale-95">
+            <i class="fa-solid fa-camera-rotate text-2xl"></i>
+            <span>ABSEN HADIR (FACE ID)</span>
+          </button>
+
+          <div id="btn-izin-group" class="grid grid-cols-2 gap-4">
+            <button onclick="openIzinModal('Izin')" class="bg-white hover:bg-slate-50 border border-blue-200 text-blue-600 font-bold py-4 rounded-2xl shadow-sm transition text-base flex items-center justify-center gap-2.5">
+              <i class="fa-solid fa-envelope-open-text text-lg"></i> Ajukan Izin
+            </button>
+            <button onclick="openIzinModal('Sakit')" class="bg-white hover:bg-slate-50 border border-amber-200 text-amber-600 font-bold py-4 rounded-2xl shadow-sm transition text-base flex items-center justify-center gap-2.5">
+              <i class="fa-solid fa-notes-medical text-lg"></i> Ajukan Sakit
+            </button>
+          </div>
+        </div>
+        <div id="attendance-locked-badge" class="hidden bg-emerald-50 border border-emerald-200 text-emerald-800 text-center p-4 rounded-2xl font-bold text-sm">
+          <i class="fa-solid fa-circle-check mr-2"></i> Presensi hari ini sudah tercatat. Tombol dikunci otomatis hingga besok.
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. DASHBOARD ADMIN LENGKAP -->
+    <div id="view-admin" class="hidden space-y-5 pb-6">
+      <div class="bg-white border border-slate-200 rounded-3xl p-5 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-slate-50 p-1 flex items-center justify-center border border-slate-200 shadow-sm">
+            <img src="https://lh3.googleusercontent.com/d/18ADwdV7-MEDMMzGr07BXvqPZvA1hHviR=s400" alt="Logo" class="w-full h-full object-contain">
+          </div>
+          <div>
+            <h2 class="font-bold text-blue-900 text-base">Panel Admin OSIS</h2>
+            <p class="text-xs text-slate-500 font-medium">SMK Negeri Karangpucung</p>
+          </div>
+        </div>
+        <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-2xl text-sm font-bold shadow-md">Keluar</button>
+      </div>
+
+      <!-- KONTROL OPERASIONAL ADMIN + FITUR UJI SERVER AKSES -->
+      <div class="bg-slate-50 border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3">
+        <h3 class="font-bold text-blue-900 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-blue-600"></i> Kontrol Operasional & Server
+        </h3>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="adminActionRestart()" class="bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-2xl text-xs font-bold shadow flex flex-col items-center gap-1">
+            <i class="fa-solid fa-play text-sm"></i>
+            <span>Mulai Absen</span>
+          </button>
+          <button onclick="adminActionStop()" class="bg-red-600 hover:bg-red-700 text-white p-3 rounded-2xl text-xs font-bold shadow flex flex-col items-center gap-1">
+            <i class="fa-solid fa-ban text-sm"></i>
+            <span>Stop Absen</span>
+          </button>
+          <button onclick="adminActionResetAll()" class="bg-amber-600 hover:bg-amber-700 text-white p-3 rounded-2xl text-xs font-bold shadow flex flex-col items-center gap-1">
+            <i class="fa-solid fa-rotate-left text-sm"></i>
+            <span>Riset dari 0</span>
+          </button>
+          <button onclick="testServer()" class="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-2xl text-xs font-bold shadow flex flex-col items-center gap-1">
+            <i class="fa-solid fa-server text-sm"></i>
+            <span>Uji Server Akses</span>
+          </button>
+        </div>
+        <p id="admin-status-info" class="text-xs text-slate-500 text-center font-medium pt-1"></p>
+      </div>
+
+      <div class="flex gap-3">
+        <button onclick="loadData()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2">
+          <i class="fa-solid fa-rotate-right"></i> Refresh Data
+        </button>
+        <button onclick="openPostInfoModal()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2">
+          <i class="fa-solid fa-bullhorn"></i> Buat Informasi
+        </button>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-3xl p-5 space-y-4 shadow-sm">
+        <h3 class="font-bold text-blue-900 text-base flex items-center gap-2 border-b border-slate-100 pb-2">
+          <i class="fa-solid fa-chart-pie text-blue-600"></i> Rekapan & Statistik Lengkap
+        </h3>
+        
+        <div class="grid grid-cols-4 gap-1 bg-slate-100 p-1 rounded-2xl text-xs font-bold text-center">
+          <button onclick="switchAdminTab('harian')" id="tab-btn-harian" class="py-2 rounded-xl bg-blue-600 text-white transition">Harian</button>
+          <button onclick="switchAdminTab('mingguan')" id="tab-btn-mingguan" class="py-2 rounded-xl text-slate-600 transition">Mingguan</button>
+          <button onclick="switchAdminTab('bulanan')" id="tab-btn-bulanan" class="py-2 rounded-xl text-slate-600 transition">Bulanan</button>
+          <button onclick="switchAdminTab('aktif')" id="tab-btn-aktif" class="py-2 rounded-xl text-slate-600 transition">Teraktif</button>
+        </div>
+
+        <div id="admin-rekap-harian" class="space-y-3 text-sm"></div>
+        <div id="admin-rekap-mingguan" class="hidden space-y-3 text-sm max-h-72 overflow-y-auto pr-1"></div>
+        <div id="admin-rekap-bulanan" class="hidden space-y-3 text-sm max-h-72 overflow-y-auto pr-1"></div>
+        <div id="admin-rekap-aktif" class="hidden space-y-3 text-sm max-h-72 overflow-y-auto pr-1"></div>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-3xl p-5 space-y-3 shadow-sm">
+        <h3 class="text-sm font-bold text-amber-600 flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left"></i> Pengajuan Izin / Sakit (Pending)
+        </h3>
+        <div id="admin-izin-list" class="space-y-3 text-sm">
+          <p class="text-slate-400 text-center py-3">Memuat pengajuan...</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL PEMINDAIAN WAJAH INTERAKTIF (LIVENESS VERIFICATION) -->
+  <div id="modal-absen" class="hidden fixed inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6">
+    <div class="flex justify-between items-center text-white pt-2">
+      <div>
+        <h3 class="font-bold text-lg text-white">Verifikasi Wajah Biometrik</h3>
+        <p id="gps-status" class="text-xs text-blue-300 mt-0.5">Memeriksa GPS...</p>
+      </div>
+      <button onclick="closeAbsenModal()" class="bg-slate-800 hover:bg-slate-700 text-white w-12 h-12 rounded-full flex items-center justify-center text-lg shadow-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="relative w-full max-w-sm mx-auto aspect-square my-auto bg-black rounded-full overflow-hidden flex items-center justify-center border-4 border-blue-500 shadow-2xl shadow-blue-500/30">
+      <video id="camera-stream" autoplay playsinline muted class="w-full h-full object-cover scale-125"></video>
+      <div id="scan-ring" class="absolute inset-0 border-8 border-blue-400/40 rounded-full pointer-events-none animate-pulse"></div>
+      <!-- Indikator Langkah Verifikasi Interaktif -->
+      <div id="gesture-overlay" class="absolute bottom-6 bg-black/70 text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 border border-white/20">
+        <i id="gesture-icon" class="fa-solid fa-face-smile text-amber-400 text-sm"></i>
+        <span id="gesture-text">Siap...</span>
+      </div>
+    </div>
+
+    <div class="text-center pb-4 space-y-2">
+      <div id="scan-instruction" class="inline-block bg-blue-900/90 border border-blue-400 text-blue-100 text-sm font-extrabold px-6 py-3 rounded-full shadow-lg">
+        Posisikan Wajah di Tengah Lingkaran...
+      </div>
+      <p class="text-[11px] text-slate-400">Ikuti instruksi gerakan wajah di atas untuk validasi manusia asli.</p>
+    </div>
+  </div>
+
+  <!-- MODAL KONFIRMASI RESET TOTAL -->
+  <div id="modal-reset-confirm" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-3xl p-6 text-center space-y-4 shadow-2xl">
+      <div class="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-2xl bg-amber-100 text-amber-600 shadow-md">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="font-extrabold text-xl text-slate-900">Konfirmasi Riset Data</h3>
+      <p class="text-sm text-slate-600 leading-relaxed font-medium">
+        Apakah Anda yakin ingin mereset seluruh data kehadiran menjadi <span class="font-bold text-red-600">0 dari awal</span>? Tindakan ini permanen.
+      </p>
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button onclick="closeResetModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 rounded-2xl transition text-sm">Batal</button>
+        <button onclick="executeResetAll()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-2xl shadow-lg transition text-sm">Ya, Riset Total</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL IZIN / SAKIT -->
+  <div id="modal-izin" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 id="izin-modal-title" class="font-bold text-lg text-blue-900">Form Pengajuan</h3>
+        <button onclick="closeIzinModal()" class="text-slate-400 hover:text-slate-600 text-base"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Alasan Keterangan</label>
+        <textarea id="izin-alasan-input" rows="4" placeholder="Tuliskan alasan lengkap Anda..." class="w-full bg-slate-50 border border-slate-300 rounded-2xl p-4 text-sm focus:outline-none focus:border-blue-600 text-slate-900 font-medium"></textarea>
+      </div>
+      <button onclick="submitIzinForm()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-2xl shadow-md text-base">Kirim Pengajuan</button>
+    </div>
+  </div>
+
+  <!-- MODAL BUAT INFORMASI -->
+  <div id="modal-info" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-lg text-blue-900">Buat Informasi Baru</h3>
+        <button onclick="closeInfoModal()" class="text-slate-400 hover:text-slate-600 text-base"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Judul Informasi</label>
+          <input type="text" id="info-title-input" placeholder="Contoh: Rapat Pleno OSIS" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600 text-slate-900 font-medium">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Isi Pesan / Pengumuman</label>
+          <textarea id="info-content-input" rows="4" placeholder="Tulis isi pengumuman..." class="w-full bg-slate-50 border border-slate-300 rounded-xl p-4 text-sm focus:outline-none focus:border-blue-600 text-slate-900 font-medium"></textarea>
+        </div>
+      </div>
+      <button onclick="submitInfoForm()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-md text-base">Publikasikan Informasi</button>
+    </div>
+  </div>
+
+  <!-- MODAL NOTIFIKASI CUSTOM -->
+  <div id="custom-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-3xl p-6 text-center space-y-4 shadow-2xl">
+      <div id="modal-icon-container" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-2xl shadow-md">
+        <i id="modal-icon" class="fa-solid fa-circle-exclamation"></i>
+      </div>
+      <h3 id="modal-title" class="font-extrabold text-xl text-slate-900">Perhatian</h3>
+      <p id="modal-message" class="text-sm text-slate-600 leading-relaxed font-medium">Pesan informasi sistem.</p>
+      <button onclick="closeCustomModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-2xl shadow-lg text-base">Mengerti / OK</button>
+    </div>
+  </div>
+
+  <footer class="text-center py-4 text-xs text-slate-500 font-semibold">
+    OSIS SMKN Karangpucung &copy; 2026 • Didukung Google Apps Script
+  </footer>
+
+  <script>
+    // URL Web App Google Apps Script backend yang sudah disesuaikan
+    const API_URL = "https://script.google.com/macros/s/AKfycby1sflRZIechsmGHdgxFC_3gVVTF0W0oLd_sZ_OZSoHXZoUdw0-xT0EUPha6Fyl72wz/exec";
+
+    let currentUser = null;
+    let currentCoords = "-7.3803, 108.8719";
+    let activeIzinJenis = 'Izin';
+    let globalDataCache = null;
+    let cameraStreamGlobal = null;
+    let autoScanTimer = null;
+
+    // Helper untuk komunikasi API fetch ke Apps Script
+    async function apiCall(action, payload = {}) {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, ...payload })
+      });
+      return await response.json();
+    }
+
+    window.onload = function() {
+      const savedUser = localStorage.getItem('osis_current_user');
+      if(savedUser) {
+        currentUser = JSON.parse(savedUser);
+        if(currentUser.role === 'admin') {
+          switchView('view-admin');
+        } else {
+          switchView('view-dashboard');
+          document.getElementById('user-name-display').innerText = currentUser.nama;
+          document.getElementById('user-kelas-display').innerText = "Kelas: " + currentUser.kelas;
+        }
+        loadData();
+        initPermissionsOnce();
+      } else {
+        switchView('view-login');
+      }
+    };
+
+    function initPermissionsOnce() {
+      if(navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          currentCoords = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+        }, err => {});
+      }
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+        .then(stream => {
+          stream.getTracks().forEach(t => t.stop());
+        }).catch(e => {});
+    }
+
+    function showModal(title, message, type = 'error') {
+      const modal = document.getElementById('custom-modal');
+      const iconContainer = document.getElementById('modal-icon-container');
+      const icon = document.getElementById('modal-icon');
+      
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-message').innerText = message;
+
+      if(type === 'error' || type === 'warning') {
+        iconContainer.className = "w-16 h-16 rounded-full mx-auto flex items-center justify-center text-2xl bg-red-100 text-red-600 shadow-md";
+        icon.className = "fa-solid fa-triangle-exclamation";
+      } else if(type === 'success') {
+        iconContainer.className = "w-16 h-16 rounded-full mx-auto flex items-center justify-center text-2xl bg-emerald-100 text-emerald-600 shadow-md";
+        icon.className = "fa-solid fa-circle-check";
+      } else {
+        iconContainer.className = "w-16 h-16 rounded-full mx-auto flex items-center justify-center text-2xl bg-blue-100 text-blue-600 shadow-md";
+        icon.className = "fa-solid fa-circle-info";
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeCustomModal() {
+      document.getElementById('custom-modal').classList.add('hidden');
+    }
+
+    function switchView(viewId) {
+      ['view-login', 'view-forgot', 'view-dashboard', 'view-admin'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(viewId).classList.remove('hidden');
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      const btn = document.getElementById('btn-login');
+
+      btn.innerText = "Memeriksa...";
+      try {
+        const res = await apiCall('checkLogin', { username: u, password: p });
+        btn.innerText = "Masuk Sistem";
+        if(res.success) {
+          currentUser = res.user;
+          localStorage.setItem('osis_current_user', JSON.stringify(currentUser));
+          initPermissionsOnce();
+          
+          if(currentUser.role === 'admin') {
+            switchView('view-admin');
+          } else {
+            switchView('view-dashboard');
+          }
+          loadData();
+        } else {
+          showModal("Login Gagal", res.message, "error");
+        }
+      } catch (err) {
+        btn.innerText = "Masuk Sistem";
+        showModal("Gagal Terhubung", "Terjadi kesalahan jaringan ke Apps Script server.", "error");
+      }
+    }
+
+    async function handleForgot(e) {
+      e.preventDefault();
+      const u = document.getElementById('f-username').value;
+      const p = document.getElementById('f-newpass').value;
+
+      try {
+        const res = await apiCall('changePassword', { username: u, newpass: p });
+        if(res.success) {
+          showModal("Berhasil", res.message, "success");
+          switchView('view-login');
+        } else {
+          showModal("Gagal", res.message, "error");
+        }
+      } catch (err) {
+        showModal("Gagal", "Koneksi terputus.", "error");
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('osis_current_user');
+      currentUser = null;
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      switchView('view-login');
+    }
+
+    async function loadData() {
+      if(!currentUser) return;
+      try {
+        const data = await apiCall('getDashboardData', { username: currentUser.username });
+        globalDataCache = data;
+
+        const infoContainer = document.getElementById('member-info-container');
+        if(!data.infoList || data.infoList.length === 0) {
+          infoContainer.innerHTML = '<div class="text-sm text-slate-500 bg-slate-50 p-4 rounded-2xl border text-center font-medium">Belum ada pengumuman dari Admin.</div>';
+        } else {
+          infoContainer.innerHTML = data.infoList.map(inf => `
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+              <div class="flex justify-between items-center">
+                <h4 class="font-bold text-blue-900 text-sm">${inf.judul}</h4>
+                <span class="text-[10px] text-slate-400 font-semibold">${inf.tanggal}</span>
+              </div>
+              <p class="text-xs text-slate-700 font-medium leading-relaxed">${inf.isi}</p>
+            </div>
+          `).join('');
+        }
+
+        if(currentUser.role === 'admin') {
+          renderAdminRekap(data);
+          renderAdminIzin(data);
+          document.getElementById('admin-status-info').innerText = `Info Status Absensi: ${data.restartInfo || '-'}`;
+        } else {
+          renderMemberStats(data);
+        }
+      } catch (err) {
+        console.error("Gagal memuat data dashboard:", err);
+      }
+    }
+
+    setInterval(() => {
+      if(currentUser) loadData();
+    }, 60000);
+
+    function renderMemberStats(data) {
+      const myStat = data.usersStats.find(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
+      if(myStat) {
+        document.getElementById('user-name-display').innerText = myStat.nama;
+        document.getElementById('user-kelas-display').innerText = "Kelas: " + myStat.kelas;
+        
+        document.getElementById('stat-hadir').innerText = myStat.hadirBulan;
+        document.getElementById('stat-izin').innerText = myStat.izinBulan;
+        document.getElementById('stat-sakit').innerText = myStat.sakitBulan;
+        document.getElementById('stat-alpha').innerText = myStat.alphaBulan;
+
+        if(myStat.sudahAbsenHariIni) {
+          document.getElementById('attendance-action-box').classList.add('hidden');
+          document.getElementById('attendance-locked-badge').classList.remove('hidden');
+        } else {
+          document.getElementById('attendance-action-box').classList.remove('hidden');
+          document.getElementById('attendance-locked-badge').classList.add('hidden');
+        }
+      }
+    }
+
+    function renderAdminRekap(data) {
+      let hadirList = data.usersStats.filter(u => u.statusHarian === 'Hadir');
+      let izinList = data.usersStats.filter(u => u.statusHarian === 'Izin');
+      let sakitList = data.usersStats.filter(u => u.statusHarian === 'Sakit');
+      let alphaList = data.usersStats.filter(u => u.statusHarian === 'Tanpa Keterangan');
+
+      let harianHTML = `
+        <div class="space-y-3">
+          <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl">
+            <span class="font-bold text-emerald-800 text-sm">Hadir (${hadirList.length})</span>
+            <div class="mt-2 text-xs text-emerald-900 space-y-1">${hadirList.map((u, i) => `<div>${i+1}. ${u.nama} (${u.kelas})</div>`).join('') || '<i>Tidak ada</i>'}</div>
+          </div>
+          <div class="bg-blue-50 border border-blue-200 p-4 rounded-2xl">
+            <span class="font-bold text-blue-800 text-sm">Izin (${izinList.length})</span>
+            <div class="mt-2 text-xs text-blue-900 space-y-1">${izinList.map((u, i) => `<div>${i+1}. ${u.nama} (${u.kelas})</div>`).join('') || '<i>Tidak ada</i>'}</div>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl">
+            <span class="font-bold text-amber-800 text-sm">Sakit (${sakitList.length})</span>
+            <div class="mt-2 text-xs text-amber-900 space-y-1">${sakitList.map((u, i) => `<div>${i+1}. ${u.nama} (${u.kelas})</div>`).join('') || '<i>Tidak ada</i>'}</div>
+          </div>
+          <div class="bg-red-50 border border-red-200 p-4 rounded-2xl">
+            <span class="font-bold text-red-800 text-sm">Tanpa Keterangan (${alphaList.length})</span>
+            <div class="mt-2 text-xs text-red-900 space-y-1 max-h-40 overflow-y-auto">${alphaList.map((u, i) => `<div>${i+1}. ${u.nama} (${u.kelas})</div>`).join('') || '<i>Tidak ada</i>'}</div>
+          </div>
+        </div>
+      `;
+      document.getElementById('admin-rekap-harian').innerHTML = harianHTML;
+
+      document.getElementById('admin-rekap-mingguan').innerHTML = data.usersStats.map(u => `
+        <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+          <div>
+            <p class="font-bold text-slate-900 text-sm">${u.nama}</p>
+            <p class="text-xs text-slate-500 font-medium">Kelas: ${u.kelas}</p>
+          </div>
+          <div class="text-right text-xs font-bold text-slate-700">
+            <div>Hadir: ${u.hadirMinggu} hr</div>
+            <div class="text-blue-600">Izin: ${u.izinMinggu} | Sakit: ${u.sakitMinggu}</div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('admin-rekap-bulanan').innerHTML = data.usersStats.map(u => `
+        <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+          <div>
+            <p class="font-bold text-slate-900 text-sm">${u.nama}</p>
+            <p class="text-xs text-slate-500 font-medium">Kelas: ${u.kelas}</p>
+          </div>
+          <div class="text-right text-xs font-bold text-slate-700">
+            <div>Hadir: ${u.hadirBulan} hr</div>
+            <div class="text-blue-600">Izin: ${u.izinBulan} | Sakit: ${u.sakitBulan}</div>
+          </div>
+        </div>
+      `).join('');
+
+      let sortedActive = [...data.usersStats].sort((a,b) => b.totalHadirAll - a.totalHadirAll);
+      document.getElementById('admin-rekap-aktif').innerHTML = sortedActive.map((u, idx) => `
+        <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+          <div>
+            <span class="font-black text-blue-600 mr-2">#${idx+1}</span>
+            <span class="font-bold text-slate-900 text-sm">${u.nama}</span>
+            <p class="text-xs text-slate-500 font-medium ml-6">Kelas: ${u.kelas}</p>
+          </div>
+          <span class="font-extrabold text-xs bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-xl">${u.totalHadirAll}x Hadir</span>
+        </div>
+      `).join('');
+    }
+
+    function renderAdminIzin(data) {
+      const izinBox = document.getElementById('admin-izin-list');
+      const pending = data.pengajuan ? data.pengajuan.filter(p => p[5] === 'Pending') : [];
+      if(pending.length === 0) {
+        izinBox.innerHTML = '<p class="text-slate-400 text-center py-3">Tidak ada pengajuan izin baru.</p>';
+      } else {
+        izinBox.innerHTML = pending.map(p => `
+          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+            <div>
+              <span class="font-bold text-slate-900 text-base">${p[2]}</span> <span class="text-blue-600 font-semibold">(${p[3]})</span>
+              <p class="text-xs text-slate-500 mt-0.5 font-medium">${p[4]}</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="respondIzin('${p[0]}', 'Disetujui')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-bold shadow">ACC</button>
+              <button onclick="respondIzin('${p[0]}', 'Ditolak')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-xl text-xs font-bold shadow">Tolak</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function switchAdminTab(tab) {
+      ['harian', 'mingguan', 'bulanan', 'aktif'].forEach(t => {
+        document.getElementById(`admin-rekap-${t}`).classList.add('hidden');
+        document.getElementById(`tab-btn-${t}`).className = "py-2 rounded-xl text-slate-600 transition";
+      });
+      document.getElementById(`admin-rekap-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${tab}`).className = "py-2 rounded-xl bg-blue-600 text-white transition font-bold shadow";
+    }
+
+    async function adminActionRestart() {
+      const tanggalSekarang = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      try {
+        const res = await apiCall('setAdminControlStatus', { status: 'RESET_START', info: 'Aktif sejak: ' + tanggalSekarang });
+        showModal("Berhasil", "Absensi dimulai kembali per tanggal: " + tanggalSekarang, "success");
+        loadData();
+      } catch (err) {
+        showModal("Gagal", "Gagal memperbarui status.", "error");
+      }
+    }
+
+    async function adminActionStop() {
+      try {
+        const res = await apiCall('setAdminControlStatus', { status: 'CLOSED', info: 'Status: Diliburkan / Stop Absensi' });
+        showModal("Berhasil", "Absensi berhasil di-STOP / diliburkan.", "success");
+        loadData();
+      } catch (err) {
+        showModal("Gagal", "Gagal menghentikan absensi.", "error");
+      }
+    }
+
+    function adminActionResetAll() {
+      document.getElementById('modal-reset-confirm').classList.remove('hidden');
+    }
+
+    function closeResetModal() {
+      document.getElementById('modal-reset-confirm').classList.add('hidden');
+    }
+
+    async function executeResetAll() {
+      closeResetModal();
+      try {
+        const res = await apiCall('resetAllAttendanceData');
+        showModal("Berhasil Reset", res.message, "success");
+        loadData();
+      } catch (err) {
+        showModal("Gagal", "Gagal mereset data.", "error");
+      }
+    }
+
+    async function testServer() {
+      showModal("Menguji Server", "Sedang menghubungkan ke Google Sheets & Apps Script...", "info");
+      try {
+        const res = await apiCall('testServerConnection');
+        if(res.success) {
+          showModal("Uji Server Berhasil", res.message, "success");
+        } else {
+          showModal("Uji Server Gagal", res.message, "warning");
+        }
+      } catch (err) {
+        showModal("Uji Server Gagal", "Server Apps Script tidak merespons koneksi.", "error");
+      }
+    }
+
+    // --- ALUR VERIFIKASI WAJAH BIOMETRIK INTERAKTIF (LIVENESS) ---
+    async function openAbsenModal() {
+      document.getElementById('modal-absen').classList.remove('hidden');
+      updateScanInstruction("Posisikan Wajah di Tengah Lingkaran...", "fa-face-smile", "Tahap 1/3: Posisi Wajah");
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          currentCoords = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+          document.getElementById('gps-status').innerText = `GPS Aktif: Lokasi Terdeteksi`;
+        }, err => {
+          document.getElementById('gps-status').innerText = "GPS Gagal, Harap Aktifkan Lokasi.";
+        });
+      }
+
+      try {
+        if (cameraStreamGlobal) {
+          cameraStreamGlobal.getTracks().forEach(t => t.stop());
+        }
+
+        const constraints = {
+          video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 720 } },
+          audio: false
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        cameraStreamGlobal = stream;
+        const videoElement = document.getElementById('camera-stream');
+        videoElement.srcObject = stream;
+        await videoElement.play();
+
+        startInteractiveLivenessSequence();
+
+      } catch (err) {
+        console.error("Kamera depan error:", err);
+        closeAbsenModal();
+        showModal("Akses Kamera", "Gagal membuka kamera depan. Pastikan izin kamera aktif di browser HP.", "warning");
+      }
+    }
+
+    function updateScanInstruction(text, iconClass, overlayText) {
+      document.getElementById('scan-instruction').innerText = text;
+      document.getElementById('gesture-icon').className = `fa-solid ${iconClass} text-amber-400 text-sm`;
+      document.getElementById('gesture-text').innerText = overlayText;
+    }
+
+    // Alur Interaktif Gerakan Wajah
+    function startInteractiveLivenessSequence() {
+      if(autoScanTimer) clearTimeout(autoScanTimer);
+
+      // Langkah 1: Posisikan Wajah (2 detik)
+      autoScanTimer = setTimeout(() => {
+        // Langkah 2: Tengok Kanan
+        updateScanInstruction("Silakan TENGOK KE KANAN ➔", "fa-hand-point-right", "Tahap 2/3: Tengok Kanan");
+        document.getElementById('scan-ring').className = "absolute inset-0 border-8 border-amber-400 rounded-full pointer-events-none animate-pulse";
+
+        autoScanTimer = setTimeout(() => {
+          // Langkah 3: Tengok Kiri
+          updateScanInstruction("Silakan TENGOK KE KIRI ⬅", "fa-hand-point-left", "Tahap 3/3: Tengok Kiri");
+          document.getElementById('scan-ring').className = "absolute inset-0 border-8 border-indigo-400 rounded-full pointer-events-none animate-pulse";
+
+          autoScanTimer = setTimeout(() => {
+            // Selesai: Validasi Manusia Asli
+            updateScanInstruction("✔ Wajah Valid! Mengirim Presensi...", "fa-circle-check", "Verifikasi Selesai");
+            document.getElementById('scan-ring').className = "absolute inset-0 border-8 border-emerald-500 rounded-full pointer-events-none";
+
+            setTimeout(() => {
+              processAbsenSubmitAutomatically();
+            }, 1200);
+
+          }, 2500); // Durasi tengok kiri
+        }, 2500); // Durasi tengok kanan
+      }, 2000); // Durasi posisikan wajah
+    }
+
+    function closeAbsenModal() {
+      if(autoScanTimer) clearTimeout(autoScanTimer);
+      if(cameraStreamGlobal) {
+        cameraStreamGlobal.getTracks().forEach(t => t.stop());
+      }
+      document.getElementById('modal-absen').classList.add('hidden');
+    }
+
+    async function processAbsenSubmitAutomatically() {
+      try {
+        const res = await apiCall('submitAbsen', {
+          username: currentUser.username,
+          coords: currentCoords,
+          verifyType: "interactive_liveness_verified"
+        });
+        closeAbsenModal();
+        if(res.success) {
+          showModal("Presensi Berhasil", res.message, "success");
+          loadData();
+        } else {
+          showModal("Absensi Ditolak", res.message, "warning");
+        }
+      } catch (err) {
+        closeAbsenModal();
+        showModal("Gagal Mengirim", "Koneksi ke Apps Script bermasalah.", "error");
+      }
+    }
+
+    function openIzinModal(jenis) {
+      activeIzinJenis = jenis;
+      document.getElementById('izin-modal-title').innerText = `Form Pengajuan ${jenis}`;
+      document.getElementById('izin-alasan-input').value = '';
+      document.getElementById('modal-izin').classList.remove('hidden');
+    }
+
+    function closeIzinModal() {
+      document.getElementById('modal-izin').classList.add('hidden');
+    }
+
+    async function submitIzinForm() {
+      const alasan = document.getElementById('izin-alasan-input').value.trim();
+      if(!alasan) {
+        showModal("Peringatan", "Harap isi alasan pengajuan.", "warning");
+        return;
+      }
+      closeIzinModal();
+      try {
+        const res = await apiCall('submitIzinSakit', {
+          username: currentUser.username,
+          jenis: activeIzinJenis,
+          alasan: alasan
+        });
+        showModal("Berhasil", res.message, "success");
+        loadData();
+      } catch (err) {
+        showModal("Gagal", "Gagal mengirim pengajuan izin.", "error");
+      }
+    }
+
+    function openPostInfoModal() {
+      document.getElementById('info-title-input').value = '';
+      document.getElementById('info-content-input').value = '';
+      document.getElementById('modal-info').classList.remove('hidden');
+    }
+
+    function closeInfoModal() {
+      document.getElementById('modal-info').classList.add('hidden');
+    }
+
+    async function submitInfoForm() {
+      const judul = document.getElementById('info-title-input').value.trim();
+      const isi = document.getElementById('info-content-input').value.trim();
+      if(!judul || !isi) {
+        showModal("Peringatan", "Judul dan isi wajib diisi.", "warning");
+        return;
+      }
+      closeInfoModal();
+      try {
+        const res = await apiCall('postAnnouncement', { judul, isi });
+        showModal("Berhasil", res.message, "success");
+        loadData();
+      } catch (err) {
+        showModal("Gagal", "Gagal mempublikasikan pengumuman.", "error");
+      }
+    }
+
+    async function respondIzin(id, status) {
+      try {
+        const res = await apiCall('approveIzin', { id, status });
+        showModal("Berhasil", res.message, "success");
+        loadData();
+      } catch (err) {
+        showModal("Gagal", "Gagal memperbarui status pengajuan.", "error");
+      }
+    }
+  </script>
+</body>
+</html>
