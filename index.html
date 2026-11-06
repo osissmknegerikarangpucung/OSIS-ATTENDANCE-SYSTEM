@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Absensi OSIS SMKN Karangpucung</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between">
+
+  <!-- GANTI URL DI BAWAH DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA -->
+  <script>
+    const API_URL = "Https://script.google.com/macros/s/AKfycby1sflRZIechsmGHdgxFC_3gVVTF0W0oLd_sZ_OZSoHXZoUdw0-xT0EUPha6Fyl72wz/exec";
+  </script>
+
+  <div id="app" class="w-full max-w-lg mx-auto p-5 flex-grow flex flex-col justify-center">
+
+    <!-- 1. HALAMAN LOGIN -->
+    <div id="view-login" class="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl shadow-blue-500/5">
+      <div class="text-center mb-8">
+        <div class="w-24 h-24 mx-auto mb-4 rounded-3xl overflow-hidden bg-white p-2 shadow-lg shadow-blue-500/10 flex items-center justify-center border border-slate-100">
+          <img src="https://lh3.googleusercontent.com/d/18ADwdV7-MEDMMzGr07BXvqPZvA1hHviR=s400" alt="Logo SMK Neka" class="w-full h-full object-contain">
+        </div>
+        <h1 class="text-3xl font-extrabold tracking-tight text-blue-900">ABSENSI OSIS</h1>
+        <p class="text-sm text-slate-500 mt-1 font-medium">SMK Negeri Karangpucung • GitHub Pages Edition</p>
+      </div>
+
+      <form id="form-login" onsubmit="handleLogin(event)" class="space-y-5">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Username / Nama</label>
+          <input type="text" id="username" required placeholder="Username Anda" class="w-full bg-slate-50 border border-slate-300 rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-blue-600 text-slate-900 font-medium">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Password</label>
+          <input type="password" id="password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-300 rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-blue-600 text-slate-900 font-medium">
+        </div>
+        <button type="submit" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl py-4 shadow-lg transition flex items-center justify-center gap-3 text-lg">
+          <span>Masuk Sistem</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- 2. DASHBOARD ANGGOTA -->
+    <div id="view-dashboard" class="hidden space-y-6 pb-6">
+      <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-6 shadow-xl flex justify-between items-center text-white">
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-md">
+            <img src="https://lh3.googleusercontent.com/d/18ADwdV7-MEDMMzGr07BXvqPZvA1hHviR=s400" alt="Logo" class="w-full h-full object-contain">
+          </div>
+          <div>
+            <p class="text-sm text-blue-100 font-medium">Selamat Datang,</p>
+            <h2 id="user-name-display" class="text-lg font-bold text-white max-w-[180px] truncate">Nama Anggota</h2>
+            <span id="user-kelas-display" class="inline-block bg-white/20 text-white text-xs px-3 py-1 rounded-full font-semibold mt-1">Kelas X</span>
+          </div>
+        </div>
+        <button onclick="logout()" class="bg-red-500/20 text-red-100 p-3.5 rounded-2xl transition"><i class="fa-solid fa-power-off"></i></button>
+      </div>
+
+      <div class="grid grid-cols-4 gap-3 text-center">
+        <div class="bg-white border p-4 rounded-2xl"><span class="block text-xs text-emerald-600 font-bold uppercase">Hadir</span><span id="stat-hadir" class="text-2xl font-black">0</span></div>
+        <div class="bg-white border p-4 rounded-2xl"><span class="block text-xs text-blue-600 font-bold uppercase">Izin</span><span id="stat-izin" class="text-2xl font-black">0</span></div>
+        <div class="bg-white border p-4 rounded-2xl"><span class="block text-xs text-amber-600 font-bold uppercase">Sakit</span><span id="stat-sakit" class="text-2xl font-black">0</span></div>
+        <div class="bg-white border p-4 rounded-2xl"><span class="block text-xs text-red-600 font-bold uppercase">Alpha</span><span id="stat-alpha" class="text-2xl font-black">0</span></div>
+      </div>
+
+      <div class="space-y-4 pt-2">
+        <button onclick="openAbsenModal()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold py-5 px-6 rounded-3xl shadow-xl flex items-center justify-center gap-4 text-lg">
+          <i class="fa-solid fa-camera-rotate text-2xl"></i>
+          <span>ABSEN HADIR (FACE ID)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. PANEL ADMIN -->
+    <div id="view-admin" class="hidden space-y-5 pb-6">
+      <div class="bg-white border rounded-3xl p-5 flex justify-between items-center shadow-sm">
+        <h2 class="font-bold text-blue-900">Panel Admin OSIS</h2>
+        <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold">Keluar</button>
+      </div>
+      <div class="bg-slate-50 border rounded-3xl p-5 space-y-3">
+        <h3 class="font-bold text-blue-900 text-sm">Kontrol Server</h3>
+        <button onclick="testServer()" class="w-full bg-indigo-600 text-white p-3 rounded-2xl text-xs font-bold">Uji Server Akses</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL KAMERA AMAN (MENGGUNAKAN FILE UPLOAD / CAPTURE DI DOMAIN GITHUB) -->
+  <div id="modal-absen" class="hidden fixed inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6">
+    <div class="flex justify-between items-center text-white pt-2">
+      <h3 class="font-bold text-lg">Verifikasi Wajah Biometrik</h3>
+      <button onclick="closeAbsenModal()" class="bg-slate-800 text-white w-12 h-12 rounded-full"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="relative w-full max-w-sm mx-auto aspect-square my-auto bg-slate-900 rounded-full flex flex-col items-center justify-center border-4 border-blue-500 shadow-2xl p-6 text-center space-y-4">
+      <div class="w-20 h-20 bg-blue-600/30 rounded-full flex items-center justify-center text-blue-400 text-3xl animate-pulse">
+        <i class="fa-solid fa-camera-rotate"></i>
+      </div>
+      <label class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-xl text-sm flex items-center gap-2 cursor-pointer">
+        <i class="fa-solid fa-camera"></i> Buka Kamera Depan
+        <input type="file" accept="image/*" capture="user" class="hidden" onchange="handleImageCaptured(event)">
+      </label>
+    </div>
+    <div class="text-center pb-4 text-white text-xs" id="scan-instruction">Posisikan Wajah Anda</div>
+  </div>
+
+  <!-- MODAL CUSTOM NOTIFIKASI -->
+  <div id="custom-modal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-3xl p-6 text-center space-y-4 shadow-2xl">
+      <h3 id="modal-title" class="font-extrabold text-xl text-slate-900">Perhatian</h3>
+      <p id="modal-message" class="text-sm text-slate-600">Pesan sistem</p>
+      <button onclick="closeCustomModal()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-2xl">OK</button>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let currentCoords = "-7.xxxxx, 109.xxxxx";
+
+    window.onload = function() {
+      const savedUser = localStorage.getItem('osis_current_user');
+      if(savedUser) {
+        currentUser = JSON.parse(savedUser);
+        switchView(currentUser.role === 'admin' ? 'view-admin' : 'view-dashboard');
+        loadData();
+      }
+    };
+
+    function callAPI(action, data = {}, callback) {
+      fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: action, ...data })
+      })
+      .then(res => res.json())
+      .then(res => callback(res))
+      .catch(err => showModal("Koneksi Gagal", err.toString(), "error"));
+    }
+
+    function showModal(title, message) {
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-message').innerText = message;
+      document.getElementById('custom-modal').classList.remove('hidden');
+    }
+    function closeCustomModal() { document.getElementById('custom-modal').classList.add('hidden'); }
+
+    function switchView(viewId) {
+      ['view-login', 'view-dashboard', 'view-admin'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      document.getElementById(viewId).classList.remove('hidden');
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      callAPI('checkLogin', { username, password }, res => {
+        if(res.success) {
+          currentUser = res.user;
+          localStorage.setItem('osis_current_user', JSON.stringify(currentUser));
+          switchView(currentUser.role === 'admin' ? 'view-admin' : 'view-dashboard');
+          loadData();
+        } else {
+          showModal("Login Gagal", res.message);
+        }
+      });
+    }
+
+    function logout() {
+      localStorage.removeItem('osis_current_user');
+      currentUser = null;
+      switchView('view-login');
+    }
+
+    function loadData() {
+      if(!currentUser) return;
+      fetch(`${API_URL}?action=getDashboardData&username=${currentUser.username}`)
+      .then(res => res.json())
+      .then(data => {
+        if(currentUser.role !== 'admin') {
+          const myStat = data.usersStats.find(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
+          if(myStat) {
+            document.getElementById('user-name-display').innerText = myStat.nama;
+            document.getElementById('user-kelas-display').innerText = "Kelas: " + myStat.kelas;
+            document.getElementById('stat-hadir').innerText = myStat.hadirBulan;
+            document.getElementById('stat-izin').innerText = myStat.izinBulan;
+            document.getElementById('stat-sakit').innerText = myStat.sakitBulan;
+            document.getElementById('stat-alpha').innerText = myStat.alphaBulan;
+          }
+        }
+      });
+    }
+
+    function openAbsenModal() {
+      document.getElementById('modal-absen').classList.remove('hidden');
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          currentCoords = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+        });
+      }
+    }
+
+    function closeAbsenModal() { document.getElementById('modal-absen').classList.add('hidden'); }
+
+    function handleImageCaptured(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        callAPI('submitAbsen', { username: currentUser.username, gps: currentCoords, foto: e.target.result }, res => {
+          closeAbsenModal();
+          showModal(res.success ? "Berhasil" : "Ditolak", res.message);
+          if(res.success) loadData();
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function testServer() {
+      callAPI('testServer', {}, res => showModal("Uji Server", res.message));
+    }
+  </script>
+</body>
+</html>
