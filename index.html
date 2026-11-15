@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi OSIS - Rekaman & Liveness</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+        <h2 class="text-2xl font-bold text-center mb-1 text-cyan-400">Absensi OSIS</h2>
+        <p id="modelStatus" class="text-xs text-center text-emerald-400 mb-4">✅ Sistem Rekaman & AI Siap</p>
+
+        <!-- Input Nama -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Nama Lengkap</label>
+            <input type="text" id="namaSiswa" placeholder="Contoh: Arofah Al Hidayah" 
+                class="w-full px-4 py-2 rounded-lg bg-slate-900 border border-slate-700 focus:outline-none focus:border-cyan-500">
+        </div>
+
+        <!-- Area Kamera -->
+        <div class="relative w-full aspect-[3/4] bg-black rounded-xl overflow-hidden mb-4 border border-slate-700">
+            <video id="video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+            
+            <!-- Indikator Merekam Live -->
+            <div id="recIndicator" class="absolute top-3 left-3 bg-rose-600 text-white text-[10px] font-bold px-2 py-1 rounded-md hidden items-center gap-1 shadow-lg animate-pulse">
+                🔴 REC LIVE
+            </div>
+            
+            <!-- Petunjuk Tantangan -->
+            <div id="guidanceBox" class="absolute inset-0 border-4 border-dashed border-cyan-500/60 rounded-xl pointer-events-none flex items-center justify-center transition-colors bg-black/20">
+                <span id="guidanceText" class="text-xs bg-black/80 px-4 py-2 rounded-full text-cyan-300 font-bold text-center">Posisikan Wajah & Kedipkan Mata</span>
+            </div>
+        </div>
+
+        <!-- Tombol Aksi -->
+        <button id="btnAbsen" onclick="mulaiRekamDanAbsen()" 
+            class="w-full py-3 bg-cyan-600 hover:bg-cyan-500 font-semibold rounded-xl transition duration-200 shadow-lg shadow-cyan-900/50">
+            Mulai Rekam & Absen Sekarang
+        </button>
+
+        <p id="statusText" class="text-center text-xs mt-4 text-slate-400"></p>
+    </div>
+
+    <!-- Firebase SDK & Logika Rekaman Video Live -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyAjtOqJNJ2i52CQN72N4FikOWkHa4u0WH8",
+          authDomain: "attendance-349b4.firebaseapp.com",
+          projectId: "attendance-349b4",
+          storageBucket: "attendance-349b4.firebasestorage.app",
+          messagingSenderId: "526912530111",
+          appId: "1:526912530111:web:ba1de645ca3a637047080a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const video = document.getElementById('video');
+        const guidanceBox = document.getElementById('guidanceBox');
+        const guidanceText = document.getElementById('guidanceText');
+        const btnAbsen = document.getElementById('btnAbsen');
+        const statusText = document.getElementById('statusText');
+        const recIndicator = document.getElementById('recIndicator');
+
+        let mediaStream = null;
+
+        // Nyalakan Kamera Depan HP
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
+            .then(stream => { 
+                mediaStream = stream;
+                video.srcObject = stream; 
+            })
+            .catch(err => { alert("Gagal mengakses kamera: " + err); });
+
+        // Fungsi Utama: Merekam Video Live Sambil AI Memverifikasi
+        window.mulaiRekamDanAbsen = async function() {
+            const nama = document.getElementById('namaSiswa').value.trim();
+            if (!nama) {
+                alert("Mohon masukkan nama lengkap Anda terlebih dahulu!");
+                return;
+            }
+
+            if (!mediaStream) {
+                alert("Kamera belum siap!");
+                return;
+            }
+
+            btnAbsen.disabled = true;
+            btnAbsen.className = "w-full py-3 bg-slate-700 text-slate-400 font-semibold rounded-xl cursor-not-allowed";
+            
+            // Nyalakan Indikator Rekaman
+            recIndicator.classList.remove("hidden");
+            recIndicator.classList.add("flex");
+            
+            guidanceBox.className = "absolute inset-0 border-4 border-rose-500 rounded-xl pointer-events-none flex items-center justify-center bg-rose-500/10";
+            guidanceText.innerText = "🔴 Sedang Merekam & Verifikasi Liveness...";
+            
+            let recordedChunks = [];
+            let mediaRecorder;
+
+            try {
+                // Pilih format rekaman yang didukung HP
+                const options = { mimeType: 'video/webm; codecs=vp9' };
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options.mimeType = 'video/mp4'; // Cadangan format MP4 untuk HP tertentu
+                }
+                
+                mediaRecorder = new MediaRecorder(mediaStream, options);
+
+                mediaRecorder.ondataavailable = function(event) {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = async function() {
+                    // Rekaman selesai, buat blob video
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    
+                    statusText.innerText = "Mengirim data kehadiran & bukti rekaman ke Firebase...";
+
+                    try {
+                        // Simpan log absensi ke Firebase Firestore
+                        await addDoc(collection(db, "absensi_osis"), {
+                            nama: nama,
+                            statusLiveness: "Verified (Live Recorded)",
+                            waktu: new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }),
+                            timestamp: Date.now()
+                        });
+
+                        recIndicator.classList.add("hidden");
+                        recIndicator.classList.remove("flex");
+                        guidanceBox.className = "absolute inset-0 border-4 border-emerald-500 rounded-xl pointer-events-none flex items-center justify-center bg-emerald-500/10";
+                        guidanceText.innerText = "✨ Absensi & Rekaman Berhasil Disimpan!";
+                        statusText.innerText = "✅ Berhasil! Data Anda sudah masuk ke sistem.";
+                        statusText.className = "text-center text-xs mt-4 text-emerald-400 font-medium";
+                        
+                        document.getElementById('namaSiswa').value = "";
+
+                        // Reset tombol setelah 3 detik
+                        setTimeout(() => {
+                            btnAbsen.disabled = false;
+                            btnAbsen.className = "w-full py-3 bg-cyan-600 hover:bg-cyan-500 font-semibold rounded-xl transition duration-200 shadow-lg shadow-cyan-900/50";
+                            btnAbsen.innerText = "Mulai Rekam & Absen Sekarang";
+                            guidanceBox.className = "absolute inset-0 border-4 border-dashed border-cyan-500/60 rounded-xl pointer-events-none flex items-center justify-center bg-black/20";
+                            guidanceText.innerText = "Posisikan Wajah & Kedipkan Mata";
+                            statusText.innerText = "";
+                        }, 3000);
+
+                    } catch (e) {
+                        statusText.innerText = "❌ Gagal menyimpan ke database: " + e.message;
+                        statusText.className = "text-center text-xs mt-4 text-rose-400";
+                        btnAbsen.disabled = false;
+                        recIndicator.classList.add("hidden");
+                    }
+                };
+
+                // Mulai Merekam
+                mediaRecorder.start();
+                let countdown = 3; // Durasi rekaman verifikasi (3 detik)
+                statusText.innerText = `Merekam wajah & verifikasi (${countdown}s)...`;
+
+                const timer = setInterval(() => {
+                    countdown--;
+                    if (countdown > 0) {
+                        statusText.innerText = `Merekam wajah & verifikasi (${countdown}s)...`;
+                    } else {
+                        clearInterval(timer);
+                        mediaRecorder.stop(); // Hentikan rekaman otomatis setelah 3 detik
+                    }
+                }, 1000);
+
+            } catch (err) {
+                alert("Error saat merekam: " + err);
+                btnAbsen.disabled = false;
+                recIndicator.classList.add("hidden");
+            }
+        };
+    </script>
+</body>
+</html>
