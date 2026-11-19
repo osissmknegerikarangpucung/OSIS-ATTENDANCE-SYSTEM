@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Absensi OSIS - SMK Negeri Karangpucung</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col items-center justify-between p-4 font-sans">
+
+    <div id="app" class="w-full max-w-md my-auto space-y-4">
+
+        <!-- 1. HALAMAN LOGIN -->
+        <div id="loginPage" class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200">
+            <div class="flex flex-col items-center mb-6">
+                <img src="https://lh3.googleusercontent.com/d/18ADwdV7-MEDMMzGr07BXvqPZvA1hHviR=s220" alt="Logo SMKNeka" class="w-20 h-20 object-contain mb-3 drop-shadow-sm">
+                <h1 class="text-2xl font-bold text-slate-900 text-center flex items-center gap-1">Selamat Datang 👋</h1>
+                <p class="text-xs text-slate-500 text-center mt-1">Masuk menggunakan Nama Lengkap atau Akun Admin</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Nama Lengkap / Username</label>
+                    <input type="text" id="loginUser" placeholder="Ketik nama lengkap Anda" 
+                        class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 text-sm focus:outline-none focus:border-slate-900 text-slate-900">
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-semibold uppercase text-slate-600">Kata Sandi</label>
+                        <button type="button" onclick="openLupaSandiModal()" class="text-xs text-blue-600 hover:underline">Lupa sandi?</button>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="loginPass" placeholder="••••••••" 
+                            class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 text-sm focus:outline-none focus:border-slate-900 text-slate-900 pr-12">
+                        <button type="button" onclick="togglePassword()" class="absolute right-3 top-3 text-xs text-slate-500 font-medium py-1 px-2 rounded hover:bg-slate-200">
+                            👁️
+                        </button>
+                    </div>
+                </div>
+
+                <button type="button" onclick="handleLoginManual()" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition shadow-lg text-sm flex items-center justify-center gap-2">
+                    Masuk ke Sistem →
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. DASHBOARD ADMIN -->
+        <div id="adminPage" class="hidden space-y-4">
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 flex items-center justify-between shadow-md">
+                <div class="flex items-center space-x-3">
+                    <img src="https://lh3.googleusercontent.com/d/18ADwdV7-MEDMMzGr07BXvqPZvA1hHviR=s220" class="w-12 h-12 object-contain">
+                    <div>
+                        <h2 class="font-bold text-slate-900 text-base">Panel Admin OSIS</h2>
+                        <p id="adminCurrentDate" class="text-xs text-slate-500">Tanggal: --/--/----</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow">
+                    Keluar
+                </button>
+            </div>
+
+            <!-- Kontrol Server -->
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-3 shadow-md">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">⚙️ Kontrol Sistem & Server Absen</h3>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="adminToggleAbsen('buka')" class="py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition shadow">Buka Absen</button>
+                    <button onclick="adminToggleAbsen('tutup')" class="py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs transition shadow">Tutup Absen</button>
+                    <button onclick="adminResetData()" class="py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs transition shadow">Reset Absen</button>
+                </div>
+                <p id="adminAbsenStatusInfo" class="text-center text-xs font-semibold text-slate-600">Memuat Status Server...</p>
+            </div>
+
+            <!-- Rekapan Hari Ini -->
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-3 shadow-md">
+                <h3 id="rekapTitleDate" class="text-xs font-bold uppercase tracking-wider text-slate-500">📊 REKAPAN HARI INI (Total: 60)</h3>
+                <div class="grid grid-cols-5 gap-1 text-center">
+                    <div onclick="showRekapDetail('Hadir')" class="bg-slate-50 p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-emerald-500"><span class="block text-[10px] text-slate-500">Hadir</span><span id="statHadir" class="font-bold text-emerald-600 text-sm">0</span></div>
+                    <div onclick="showRekapDetail('Izin')" class="bg-slate-50 p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-500"><span class="block text-[10px] text-slate-500">Izin</span><span id="statIzin" class="font-bold text-blue-600 text-sm">0</span></div>
+                    <div onclick="showRekapDetail('Sakit')" class="bg-slate-50 p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-amber-500"><span class="block text-[10px] text-slate-500">Sakit</span><span id="statSakit" class="font-bold text-amber-600 text-sm">0</span></div>
+                    <div onclick="showRekapDetail('Alfa')" class="bg-slate-50 p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-rose-500"><span class="block text-[10px] text-slate-500">Alfa</span><span id="statAlfa" class="font-bold text-rose-600 text-sm">60</span></div>
+                    <div class="bg-slate-50 p-2 rounded-xl border border-slate-200"><span class="block text-[10px] text-slate-500">Total</span><span class="font-bold text-slate-900 text-sm">60</span></div>
+                </div>
+                <p class="text-[10px] text-center text-slate-400 italic">Ketuk kotak Hadir/Izin/Sakit/Alfa untuk melihat daftar namanya.</p>
+            </div>
+
+            <!-- Leaderboard Admin -->
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 shadow-md">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">🏆 Leaderboard Kehadiran Terajin</h3>
+                <div id="adminLeaderboardList" class="space-y-1 text-xs">
+                    <p class="text-slate-400">Memuat leaderboard...</p>
+                </div>
+            </div>
+
+            <!-- Daftar Anggota -->
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-3 shadow-md">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">👥 Kelola Anggota & Bukti Kehadiran</h3>
+                <div class="max-h-72 overflow-y-auto space-y-2 text-xs" id="adminMemberList">
+                    <p class="text-slate-400 text-center py-2">Memuat daftar anggota...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. DASHBOARD ANGGOTA -->
+        <div id="memberPage" class="hidden space-y-4">
+            <div class="bg-gradient-to-r from-slate-900 to-slate-800 p-5 rounded-3xl shadow-xl flex items-center justify-between border border-slate-700 text-white">
+                <div class="flex items-center space-x-3">
+                    <img src="https://lh3.googleusercontent.com/d/18ADwdV7-MEDMMzGr07BXvqPZvA1hHviR=s220" class="w-12 h-12 object-contain bg-white/10 p-1 rounded-2xl">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-wider text-slate-400">Selamat Datang,</p>
+                        <h2 id="memberNameDisplay" class="font-bold text-white text-base">Nama Anggota</h2>
+                        <span id="memberClassDisplay" class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full text-slate-200 font-medium">Kelas X / XI</span>
+                    </div>
+                </div>
+                <button onclick="logout()" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-2xl transition text-white text-xs font-bold">Keluar</button>
+            </div>
+
+            <!-- Statistik Personal -->
+            <div class="grid grid-cols-4 gap-2 text-center">
+                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm"><span class="block text-[10px] text-emerald-600 font-bold">HADIR</span><span id="pHadir" class="font-bold text-slate-900 text-base">0</span></div>
+                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm"><span class="block text-[10px] text-blue-600 font-bold">IZIN</span><span id="pIzin" class="font-bold text-slate-900 text-base">0</span></div>
+                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm"><span class="block text-[10px] text-amber-600 font-bold">SAKIT</span><span id="pSakit" class="font-bold text-slate-900 text-base">0</span></div>
+                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm"><span class="block text-[10px] text-rose-600 font-bold">ALFA</span><span id="pAlfa" class="font-bold text-slate-900 text-base">0</span></div>
+            </div>
+
+            <!-- Leaderboard Anggota -->
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 shadow-md">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">🏆 Leaderboard Kehadiran Terajin</h3>
+                <div id="memberLeaderboardList" class="space-y-1 text-xs">
+                    <p class="text-slate-400">Memuat leaderboard...</p>
+                </div>
+            </div>
+
+            <!-- Menu Absen & Tombol Utama -->
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-3 shadow-md">
+                <div id="serverClosedWarning" class="hidden p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs text-center font-bold">
+                    ⚠️ Absensi sedang ditutup (Diluar Jadwal / Ditutup Admin).
+                </div>
+
+                <button id="btnBukaKamera" onclick="bukaKameraAbsen()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-2xl transition shadow-lg shadow-emerald-900/20 text-sm text-white flex items-center justify-center gap-2">
+                    📸 KLIK ABSEN (BUKA KAMERA)
+                </button>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="bukaModalIzinSakit('Izin')" class="py-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-bold rounded-2xl text-xs transition">✉️ Ajukan Izin</button>
+                    <button onclick="bukaModalIzinSakit('Sakit')" class="py-3 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 font-bold rounded-2xl text-xs transition">🏥 Ajukan Sakit</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 4. FULL SCREEN KAMERA MODAL -->
+    <div id="fullCameraModal" class="hidden fixed inset-0 bg-black z-50 flex flex-col justify-between p-4">
+        <div class="flex justify-between items-center text-white py-2">
+            <h3 class="font-bold text-sm">📸 Ambil Foto Wajah Absen</h3>
+            <button onclick="tutupKameraAbsen()" class="bg-white/20 px-3 py-1 rounded-xl text-xs font-bold">Tutup X</button>
+        </div>
+        <div class="relative w-full flex-1 bg-black rounded-3xl overflow-hidden border border-slate-700 flex items-center justify-center">
+            <video id="video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+            <canvas id="canvas" class="hidden"></canvas>
+            <div class="absolute inset-0 border-4 border-dashed border-cyan-400/50 rounded-3xl pointer-events-none flex items-center justify-center">
+                <span id="camStatusText" class="text-xs bg-black/70 px-4 py-2 rounded-full text-cyan-300 font-bold">Posisikan Wajah di Tengah</span>
+            </div>
+        </div>
+        <div class="py-4">
+            <button onclick="prosesSerahkanAbsen()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl transition text-base shadow-xl">
+                ✨ Ambil Foto & Cek GPS (ACC)
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL DETAIL STATISTIK & BUKTI FOTO -->
+    <div id="detailModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-md p-6 rounded-3xl border border-slate-200 space-y-4 shadow-2xl text-slate-800">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 id="modalTitle" class="font-bold text-slate-900 text-base">Detail Anggota</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+            </div>
+            <div id="modalContent" class="space-y-3 text-xs text-slate-600 max-h-96 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- MODAL PENGAJUAN IZIN / SAKIT -->
+    <div id="izinSakitModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-xs p-6 rounded-3xl border border-slate-200 space-y-4 shadow-2xl text-slate-800">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 id="izinModalTitle" class="font-bold text-slate-900 text-base">Form Pengajuan</h3>
+                <button onclick="tutupModalIzinSakit()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label id="izinLabelKet" class="block font-semibold text-slate-600 mb-1">Keterangan Alasan:</label>
+                    <textarea id="inputKeteranganIzin" rows="3" placeholder="Tuliskan keterangan lengkap..." class="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-slate-900"></textarea>
+                </div>
+                <button onclick="kirimPengajuanIzinSakit()" class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition shadow">Kirim Pengajuan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL LUPA SANDI MANDIRI -->
+    <div id="lupaSandiModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-md p-6 rounded-3xl border border-slate-200 space-y-4 shadow-2xl text-slate-800">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-900 text-base">Ubah / Reset Sandi Mandiri</h3>
+                <button onclick="closeLupaSandiModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-600 mb-1">Nama Lengkap Anda</label>
+                    <input type="text" id="resetNamaInput" placeholder="Masukkan nama lengkap" class="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-300">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-600 mb-1">Kata Sandi Baru</label>
+                    <input type="password" id="resetSandiBaru" placeholder="Minimal 6 karakter" class="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-300">
+                </div>
+                <button onclick="prosesResetSandiMandiri()" class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition">Simpan Sandi Baru</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM POPUP NOTIFIKASI -->
+    <div id="customPopup" class="hidden fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-xs p-6 rounded-3xl text-center space-y-4 shadow-2xl">
+            <div id="popupIcon" class="text-4xl">✅</div>
+            <h4 id="popupTitle" class="font-bold text-slate-900 text-base">Berhasil</h4>
+            <p id="popupMessage" class="text-xs text-slate-600">Pesan notifikasi...</p>
+            <button onclick="closePopup()" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold">OK</button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="text-center text-xs text-slate-500 py-4">
+        © 2026 Kawan Sinau. Seluruh Hak Cipta Dilindungi. Dibuat oleh Arofah Al Hidayah — SMKN Karangpucung.
+    </footer>
+
+    <!-- Firebase SDK & Script Utama -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyAjtOqJNJ2i52CQN72N4FikOWkHa4u0WH8",
+          authDomain: "attendance-349b4.firebaseapp.com",
+          projectId: "attendance-349b4",
+          storageBucket: "attendance-349b4.firebasestorage.app",
+          messagingSenderId: "526912530111",
+          appId: "1:526912530111:web:ba1de645ca3a637047080a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const TARGET_LAT = -7.380300;
+        const TARGET_LNG = 108.871900;
+        const MAX_RADIUS_METER = 500;
+
+        const daftarAnggotaOSIS = [
+            {nama: "ABYAN LUQQON FUADI", kelas: "X"}, {nama: "Adista Alyatul Husna", kelas: "X"}, {nama: "ADREAN FAJAR BATISTUTA", kelas: "X"},
+            {nama: "ATHAN AKBAR AFRISCO PURMA", kelas: "X"}, {nama: "AULYA PUTRI RAMADHAN", kelas: "X"}, {nama: "AYESSHA FEBRIANI", kelas: "X"},
+            {nama: "AZZURA ALYA FAHIRA", kelas: "X"}, {nama: "DENIS SHINATRYA", kelas: "X"}, {nama: "Dimas raditya istanto", kelas: "X"},
+            {nama: "ERLANGGA SAPUTRA", kelas: "X"}, {nama: "ERVIANA SARI", kelas: "X"}, {nama: "FAHRI PIRMANSYAH", kelas: "X"},
+            {nama: "FIRNA NAHWA HUSNAILA", kelas: "X"}, {nama: "FRANESYA APRICILIANA", kelas: "X"}, {nama: "GIAZ WILDANSYAH", kelas: "X"},
+            {nama: "HAMZAH GHANI PRIYADI", kelas: "X"}, {nama: "IIK MAULIDA", kelas: "X"}, {nama: "MUHAMAD HISYAM REVANDI PUTRA", kelas: "X"},
+            {nama: "MUSYAFFA AL KAHFI ARIADI", kelas: "X"}, {nama: "NADHIFA MAULIDAH", kelas: "X"}, {nama: "NAJWA NATANEILA", kelas: "X"},
+            {nama: "NELVITA NUR ALIFAH", kelas: "X"}, {nama: "PUPUT DWI ARYANI", kelas: "X"}, {nama: "RARA SAFIANA PUTRI", kelas: "X"},
+            {nama: "REZA FRATAMA", kelas: "X"}, {nama: "RIZIQ MUHAMMAD ADNAN", kelas: "X"}, {nama: "RIZKI AHMAD GUNAWAN", kelas: "X"},
+            {nama: "SALSABILA AFIFAH", kelas: "X"}, {nama: "SALSAUNAISATUZ Z.", kelas: "X"}, {nama: "SINDHI AYUDIA PRATAMA", kelas: "X"},
+            {nama: "SUCHI NURAZIZAH WIDYANINGSIH", kelas: "X"}, {nama: "SYAFA ANNISA MUFLIHAH", kelas: "XI"}, {nama: "SYAHARA HAIFA FILSAFAH", kelas: "XI"},
+            {nama: "SYIFA KHOIROTUN NISA", kelas: "XI"}, {nama: "ZIFARA", kelas: "XI"}, {nama: "Amelia Rezkiyani", kelas: "XI"},
+            {nama: "Andini Rahayu", kelas: "XI"}, {nama: "Annas Ghalib Firdaus", kelas: "XI"}, {nama: "Arofah Alhidayah", kelas: "XI"},
+            {nama: "Cintia Wulandari", kelas: "XI"}, {nama: "Clarissa uzi oktavia", kelas: "XI"}, {nama: "Elvina Ataya Zhafirah", kelas: "XI"},
+            {nama: "HEPPY AULIA JULIANI", kelas: "XI"}, {nama: "Jamilatun Solehah", kelas: "XI"}, {nama: "Kamila Regina Putri", kelas: "XI"},
+            {nama: "Keysa Regina Putri", kelas: "XI"}, {nama: "Kirana Dwi Ramadhani", kelas: "XI"}, {nama: "muhamad yahdi rahadian maulana", kelas: "XI"},
+            {nama: "MUHAMMAD HASSAN THOLABI", kelas: "XI"}, {nama: "Nur Alamsyah", kelas: "XI"}, {nama: "Nur Widyaningsih", kelas: "XI"},
+            {nama: "Pandoe wijaya", kelas: "XI"}, {nama: "Pramesti Eka Rahmawati", kelas: "XI"}, {nama: "Qeren Khapukh Tiberias", kelas: "XI"},
+            {nama: "Rahma Armelita", kelas: "XI"}, {nama: "Salwa Ardenita putri", kelas: "XI"}, {nama: "Shafira Nur Muslimah", kelas: "XI"},
+            {nama: "Sintiya Dwi wulansari", kelas: "XI"}, {nama: "Widia Febianti", kelas: "XI"}, {nama: "Fajar dwi sasongko", kelas: "XI TITL 1"}
+        ];
+
+        let currentUser = null;
+        let allAttendanceCache = [];
+        let mediaStream = null;
+        let tipePengajuanAktif = 'Izin';
+
+        function formatSafeName(rawName) {
+            return String(rawName || '').trim().replace(/\s+/g, '_');
+        }
+
+        function ensureCurrentUser() {
+            if (!currentUser || !currentUser.name) {
+                const savedUser = localStorage.getItem('osis_user');
+                if (savedUser) {
+                    try {
+                        const parsed = JSON.parse(savedUser);
+                        if (parsed && parsed.name) {
+                            currentUser = parsed;
+                        }
+                    } catch (err) {
+                        localStorage.removeItem('osis_user');
+                    }
+                }
+            }
+            return Boolean(currentUser && currentUser.name);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (ensureCurrentUser()) {
+                if (currentUser.role === 'admin') {
+                    showAdminDashboard();
+                } else {
+                    showMemberDashboard();
+                }
+            }
+        });
+
+        window.showPopup = function(title, message, type = 'success') {
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            document.getElementById('popupIcon').innerText = icons[type] || '✅';
+            document.getElementById('popupTitle').innerText = title;
+            document.getElementById('popupMessage').innerText = message;
+            document.getElementById('customPopup').classList.remove('hidden');
+        }
+
+        window.closePopup = function() {
+            document.getElementById('customPopup').classList.add('hidden');
+        }
+
+        window.togglePassword = function() {
+            const passInput = document.getElementById('loginPass');
+            passInput.type = passInput.type === 'password' ? 'text' : 'password';
+        }
+
+        window.handleLoginManual = async function() {
+            const inputName = document.getElementById('loginUser').value.trim();
+            const inputPass = document.getElementById('loginPass').value.trim();
+
+            if (!inputName || !inputPass) {
+                showPopup("Perhatian", "Mohon masukkan nama lengkap dan password Anda!", "error");
+                return;
+            }
+
+            if (inputName.toLowerCase() === 'admin_osis' && inputPass === 'admin123') {
+                currentUser = { name: 'Admin OSIS', role: 'admin', kelas: 'Pusat' };
+                localStorage.setItem('osis_user', JSON.stringify(currentUser));
+                showAdminDashboard();
+                return;
+            }
+
+            const matchedMember = daftarAnggotaOSIS.find(m => m.nama.toLowerCase() === inputName.toLowerCase());
+            if (!matchedMember) {
+                showPopup("Gagal Login", "Nama tidak ditemukan dalam daftar anggota OSIS.", "error");
+                return;
+            }
+
+            try {
+                const userDocRef = doc(db, "pengaturan_osis", `user_${formatSafeName(matchedMember.nama)}`);
+                const userSnap = await getDoc(userDocRef);
+                const correctPass = userSnap.exists() ? userSnap.data().password : 'osis123';
+
+                if (inputPass === correctPass) {
+                    currentUser = { name: matchedMember.nama, role: 'member', kelas: matchedMember.kelas };
+                    localStorage.setItem('osis_user', JSON.stringify(currentUser));
+                    showMemberDashboard();
+                } else {
+                    showPopup("Gagal Login", "Kata sandi salah.", "error");
+                }
+            } catch (e) {
+                if (inputPass === 'osis123') {
+                    currentUser = { name: matchedMember.nama, role: 'member', kelas: matchedMember.kelas };
+                    localStorage.setItem('osis_user', JSON.stringify(currentUser));
+                    showMemberDashboard();
+                } else {
+                    showPopup("Gagal Login", "Kata sandi salah.", "error");
+                }
+            }
+        }
+
+        function showAdminDashboard() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('adminPage').classList.remove('hidden');
+            document.getElementById('memberPage').classList.add('hidden');
+            
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            document.getElementById('adminCurrentDate').innerText = `Tanggal: ${dateStr}`;
+            document.getElementById('rekapTitleDate').innerText = `📊 REKAPAN HARI INI (${dateStr}) (Total: 60)`;
+            refreshAdminData();
+            loadServerStatusAdmin();
+        }
+
+        function showMemberDashboard() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('adminPage').classList.add('hidden');
+            document.getElementById('memberPage').classList.remove('hidden');
+            document.getElementById('memberNameDisplay').innerText = currentUser.name;
+            document.getElementById('memberClassDisplay').innerText = "Kelas " + currentUser.kelas;
+            loadMemberStats();
+            cekStatusAbsenHariIni();
+        }
+
+        window.logout = function() {
+            if(mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+            localStorage.removeItem('osis_user');
+            location.reload();
+        }
+
+        // --- KONTROL ADMIN & CEK JADWAL OTOMATIS ---
+        window.adminToggleAbsen = async function(aksi) {
+            const statusVal = aksi === 'buka' ? 'buka' : 'tutup';
+            try {
+                await setDoc(doc(db, "pengaturan_osis", "status_server"), { 
+                    status: statusVal, 
+                    manualOverride: true, 
+                    overrideTime: new Date().toDateString() 
+                }, { merge: true });
+                loadServerStatusAdmin();
+                showPopup("Berhasil", `Absensi berhasil ${statusVal === 'buka' ? 'DIBUKA' : 'DITUTUP'} oleh Admin (Mode Manual/Override).`, "success");
+            } catch(e) {
+                showPopup("Gagal", "Gagal mengubah status server: " + e.message, "error");
+            }
+        }
+
+        function getJadwalOtomatisStatus() {
+            const now = new Date();
+            const day = now.getDay();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const currentTimeMinutes = hours * 60 + minutes;
+
+            if (day === 0) return 'tutup';
+
+            if (day >= 1 && day <= 5) {
+                const bukaTime = 13 * 60 + 50;
+                const tutupTime = 17 * 60 + 30;
+                if (currentTimeMinutes >= bukaTime && currentTimeMinutes <= tutupTime) {
+                    return 'buka';
+                }
+            }
+
+            if (day === 6) {
+                const bukaTime = 9 * 60 + 0;
+                const tutupTime = 15 * 60 + 0;
+                if (currentTimeMinutes >= bukaTime && currentTimeMinutes <= tutupTime) {
+                    return 'buka';
+                }
+            }
+
+            return 'tutup';
+        }
+
+        async function loadServerStatusAdmin() {
+            try {
+                const snap = await getDoc(doc(db, "pengaturan_osis", "status_server"));
+                let status = 'tutup';
+                let keteranganMode = "Otomatis (Jadwal)";
+
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const todayStr = new Date().toDateString();
+
+                    if (data.manualOverride && data.overrideTime === todayStr) {
+                        status = data.status;
+                        keteranganMode = `Manual oleh Admin (${status.toUpperCase()})`;
+                    } else {
+                        status = getJadwalOtomatisStatus();
+                    }
+                } else {
+                    status = getJadwalOtomatisStatus();
+                }
+
+                const info = document.getElementById('adminAbsenStatusInfo');
+                if (status === 'buka') {
+                    info.innerText = `Status Absen: DIBUKA (${keteranganMode})`;
+                    info.className = "text-center text-xs font-semibold text-emerald-600";
+                } else {
+                    info.innerText = `Status Absen: DITUTUP (${keteranganMode})`;
+                    info.className = "text-center text-xs font-semibold text-rose-600";
+                }
+            } catch(e) {}
+        }
+
+        window.adminResetData = async function() {
+            if(confirm("Yakin ingin mereset seluruh data absensi hari ini di database?")) {
+                try {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const querySnapshot = await getDocs(collection(db, "absensi_osis_2026"));
+                    
+                    let count = 0;
+                    for (let docSnap of querySnapshot.docs) {
+                        if (docSnap.id.startsWith(todayStr)) {
+                            await deleteDoc(doc(db, "absensi_osis_2026", docSnap.id));
+                            count++;
+                        }
+                    }
+                    showPopup("Berhasil Reset", `Data absensi hari ini (${count} data) berhasil dihapus dari database.`, "success");
+                    refreshAdminData();
+                } catch(e) {
+                    showPopup("Gagal", "Gagal mereset data: " + e.message, "error");
+                }
+            }
+        }
+
+        // --- ALUR ABSEN PESERTA (FULL SCREEN CAMERA & GPS) ---
+        window.bukaKameraAbsen = async function() {
+            if (!ensureCurrentUser()) {
+                showPopup("Sesi Berakhir", "Data akun tidak ditemukan. Silakan login kembali.", "error");
+                return;
+            }
+
+            try {
+                const snap = await getDoc(doc(db, "pengaturan_osis", "status_server"));
+                let serverStatus = getJadwalOtomatisStatus();
+
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const todayStr = new Date().toDateString();
+                    if (data.manualOverride && data.overrideTime === todayStr) {
+                        serverStatus = data.status;
+                    }
+                }
+
+                if (serverStatus === 'tutup') {
+                    showPopup("Absen Ditutup", "Absensi sedang ditutup (Diluar jadwal atau ditutup Admin).", "error");
+                    return;
+                }
+            } catch(e) {}
+
+            document.getElementById('fullCameraModal').classList.remove('hidden');
+
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+                const videoEl = document.getElementById('video');
+                videoEl.srcObject = mediaStream;
+                await videoEl.play().catch(() => {});
+                document.getElementById('camStatusText').innerText = "Posisikan Wajah di Tengah";
+            } catch (err) {
+                showPopup("Error Kamera", "Gagal mengakses kamera perangkat: " + err.message, "error");
+                tutupKameraAbsen();
+            }
+        }
+
+        window.tutupKameraAbsen = function() {
+            if(mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            const videoEl = document.getElementById('video');
+            if (videoEl) videoEl.srcObject = null;
+            document.getElementById('fullCameraModal').classList.add('hidden');
+        }
+
+        window.prosesSerahkanAbsen = async function() {
+            if (!ensureCurrentUser()) {
+                tutupKameraAbsen();
+                showPopup("Sesi Tidak Valid", "Nama anggota tidak terbaca. Silakan login ulang.", "error");
+                return;
+            }
+
+            if (!navigator.geolocation) {
+                tutupKameraAbsen();
+                showPopup("GPS Error", "GPS tidak didukung perangkat Anda.", "error");
+                return;
+            }
+
+            const canvas = document.getElementById('canvas');
+            const video = document.getElementById('video');
+            const hasVideoFrame = video && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0;
+            canvas.width = hasVideoFrame ? video.videoWidth : 480;
+            canvas.height = hasVideoFrame ? video.videoHeight : 360;
+            const ctx = canvas.getContext('2d');
+
+            if (hasVideoFrame) {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.fillStyle = "#1e293b";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            const nowText = new Date().toLocaleString('id-ID');
+            ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+            ctx.fillRect(10, canvas.height - 40, canvas.width - 20, 30);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "12px sans-serif";
+            ctx.fillText(`${currentUser.name} | ${nowText}`, 15, canvas.height - 20);
+
+            const fotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            tutupKameraAbsen();
+
+            showPopup("Memverifikasi", "Memeriksa keakuratan lokasi GPS Anda...", "info");
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                const distance = getDistanceFromLatLonInMeters(userLat, userLng, TARGET_LAT, TARGET_LNG);
+
+                if (distance > MAX_RADIUS_METER) {
+                    showPopup("Absen DITOLAK", `Lokasi tidak valid! Anda berada di luar area SMK Negeri Karangpucung (Jarak: ${Math.round(distance)} meter). Radius maksimal 500 meter.`, "error");
+                    return;
+                }
+
+                try {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const safeName = formatSafeName(currentUser.name);
+                    const docId = `${todayStr}_${safeName}`;
+                    
+                    const existingRef = doc(db, "absensi_osis_2026", docId);
+                    const existingSnap = await getDoc(existingRef);
+                    if (existingSnap.exists()) {
+                        showPopup("Perhatian", "Anda sudah tercatat melakukan absensi hari ini!", "info");
+                        return;
+                    }
+
+                    await setDoc(existingRef, {
+                        nama: currentUser.name,
+                        kelas: currentUser.kelas || "-",
+                        status: 'Hadir',
+                        waktu: nowText,
+                        timestamp: Date.now(),
+                        foto: fotoBase64,
+                        keterangan: `Hadir (GPS Valid: ${Math.round(distance)}m)`
+                    });
+
+                    showPopup("Berhasil ACC", "GPS Akurat & Wajah Tersimpan! Absensi Hadir Berhasil.", "success");
+                    loadMemberStats();
+                    cekStatusAbsenHariIni();
+                } catch (e) {
+                    showPopup("Error Database", "Gagal menyimpan: " + (e && e.message ? e.message : String(e)), "error");
+                }
+            }, (error) => {
+                showPopup("GPS Gagal", "Gagal mendeteksi lokasi GPS. Pastikan izin lokasi aktif: " + error.message, "error");
+            }, { enableHighAccuracy: true });
+        }
+
+        // --- PENGATURAN MODAL IZIN & SAKIT ---
+        window.bukaModalIzinSakit = async function(jenis) {
+            if (!ensureCurrentUser()) {
+                showPopup("Sesi Tidak Valid", "Silakan login ulang terlebih dahulu.", "error");
+                return;
+            }
+
+            try {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const docId = `${todayStr}_${formatSafeName(currentUser.name)}`;
+                const snap = await getDoc(doc(db, "absensi_osis_2026", docId));
+                if (snap.exists()) {
+                    showPopup("Perhatian", `Anda sudah tercatat melakukan absensi (${snap.data().status}) hari ini!`, "info");
+                    return;
+                }
+            } catch(e) {}
+
+            tipePengajuanAktif = jenis;
+            document.getElementById('izinModalTitle').innerText = `Form Pengajuan ${jenis}`;
+            document.getElementById('izinLabelKet').innerText = `Keterangan Alasan ${jenis}:`;
+            document.getElementById('inputKeteranganIzin').value = '';
+            document.getElementById('izinSakitModal').classList.remove('hidden');
+        }
+
+        window.tutupModalIzinSakit = function() {
+            document.getElementById('izinSakitModal').classList.add('hidden');
+        }
+
+        window.kirimPengajuanIzinSakit = async function() {
+            if (!ensureCurrentUser()) {
+                showPopup("Sesi Tidak Valid", "Silakan login ulang terlebih dahulu.", "error");
+                return;
+            }
+
+            const alasan = document.getElementById('inputKeteranganIzin').value.trim();
+            if (!alasan) {
+                showPopup("Perhatian", "Mohon isi keterangan alasan terlebih dahulu.", "error");
+                return;
+            }
+
+            tutupModalIzinSakit();
+
+            try {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const docId = `${todayStr}_${formatSafeName(currentUser.name)}`;
+                
+                await setDoc(doc(db, "absensi_osis_2026", docId), {
+                    nama: currentUser.name,
+                    kelas: currentUser.kelas || "-",
+                    status: tipePengajuanAktif,
+                    waktu: new Date().toLocaleString('id-ID'),
+                    timestamp: Date.now(),
+                    foto: '',
+                    keterangan: alasan
+                });
+
+                showPopup("Terkirim", `Pengajuan ${tipePengajuanAktif} berhasil dikirim ke Admin.`, "success");
+                loadMemberStats();
+                cekStatusAbsenHariIni();
+            } catch (e) {
+                showPopup("Error", "Gagal mengajukan: " + e.message, "error");
+            }
+        }
+
+        function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const dLat = (lat2 - lat1) * (Math.PI/180);
+            const dLon = (lon2 - lon1) * (Math.PI/180);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * (Math.PI/180)) * Math.cos(lat2 * (Math.PI/180)) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+        }
+
+        async function cekStatusAbsenHariIni() {
+            if (!ensureCurrentUser()) return;
+
+            try {
+                const serverSnap = await getDoc(doc(db, "pengaturan_osis", "status_server"));
+                let serverStatus = getJadwalOtomatisStatus();
+
+                if (serverSnap.exists()) {
+                    const data = serverSnap.data();
+                    const todayStr = new Date().toDateString();
+                    if (data.manualOverride && data.overrideTime === todayStr) {
+                        serverStatus = data.status;
+                    }
+                }
+                
+                if (serverStatus === 'tutup') {
+                    document.getElementById('serverClosedWarning').classList.remove('hidden');
+                    document.getElementById('btnBukaKamera').disabled = true;
+                    document.getElementById('btnBukaKamera').className = "w-full py-4 bg-slate-300 font-bold rounded-2xl text-sm text-slate-500 cursor-not-allowed";
+                    return;
+                }
+
+                const todayStr = new Date().toISOString().split('T')[0];
+                const docId = `${todayStr}_${formatSafeName(currentUser.name)}`;
+                const snap = await getDoc(doc(db, "absensi_osis_2026", docId));
+                
+                if (snap.exists()) {
+                    const statusAbsen = snap.data().status;
+                    const btn = document.getElementById('btnBukaKamera');
+                    btn.disabled = true;
+                    btn.innerText = `✅ Status Hari Ini: ${statusAbsen}`;
+                    btn.className = "w-full py-4 bg-slate-400 font-bold rounded-2xl text-sm text-white cursor-not-allowed";
+                }
+            } catch(e) {}
+        }
+
+        async function loadMemberStats() {
+            if (!ensureCurrentUser()) return;
+
+            try {
+                const querySnapshot = await getDocs(collection(db, "absensi_osis_2026"));
+                let hadir = 0, izin = 0, sakit = 0, alfa = 0;
+                let userCounts = {};
+                daftarAnggotaOSIS.forEach(m => userCounts[m.nama] = 0);
+
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    if (data.status === 'Hadir' && userCounts[data.nama] !== undefined) {
+                        userCounts[data.nama]++;
+                    }
+                    if (data.nama === currentUser.name) {
+                        if (data.status === 'Hadir') hadir++;
+                        if (data.status === 'Izin') izin++;
+                        if (data.status === 'Sakit') sakit++;
+                    }
+                });
+
+                document.getElementById('pHadir').innerText = hadir;
+                document.getElementById('pIzin').innerText = izin;
+                document.getElementById('pSakit').innerText = sakit;
+                document.getElementById('pAlfa').innerText = alfa;
+
+                renderLeaderboard(userCounts, 'memberLeaderboardList');
+            } catch (e) {
+                console.log("Error stats:", e);
+            }
+        }
+
+        function renderLeaderboard(userCounts, elementId) {
+            const sorted = Object.entries(userCounts).sort((a,b) => b[1] - a[1]);
+            let html = "";
+            sorted.slice(0, 5).forEach(([nama, count], idx) => {
+                html += `
+                    <div class="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
+                        <span class="font-semibold text-slate-800">#${idx+1} ${nama}</span>
+                        <span class="text-emerald-600 font-bold">${count} Hadir</span>
+                    </div>
+                `;
+            });
+            const el = document.getElementById(elementId);
+            if(el) el.innerHTML = html || '<p class="text-slate-400">Belum ada data</p>';
+        }
+
+        let cacheHadirList = [];
+        let cacheIzinList = [];
+        let cacheSakitList = [];
+        let cacheAlfaList = [];
+
+        async function refreshAdminData() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "absensi_osis_2026"));
+                allAttendanceCache = [];
+                let hadirList = [], izinList = [], sakitList = [];
+                const todayStr = new Date().toLocaleDateString('id-ID');
+                let userCounts = {};
+                daftarAnggotaOSIS.forEach(m => userCounts[m.nama] = 0);
+
+                const absenHariIniNamaSet = new Set();
+
+                querySnapshot.forEach((docSnap) => {
+                    const d = docSnap.data();
+                    allAttendanceCache.push(d);
+                    if (d.status === 'Hadir' && userCounts[d.nama] !== undefined) userCounts[d.nama]++;
+
+                    if (d.waktu && d.waktu.includes(todayStr.split(',')[0])) {
+                        absenHariIniNamaSet.add(d.nama);
+                        if (d.status === 'Hadir') hadirList.push(d.nama);
+                        if (d.status === 'Izin') izinList.push(`${d.nama} (${d.keterangan})`);
+                        if (d.status === 'Sakit') sakitList.push(`${d.nama} (${d.keterangan})`);
+                    }
+                });
+
+                let alfaList = [];
+                daftarAnggotaOSIS.forEach(m => {
+                    if (!absenHariIniNamaSet.has(m.nama)) {
+                        alfaList.push(m.nama);
+                    }
+                });
+
+                cacheHadirList = hadirList;
+                cacheIzinList = izinList;
+                cacheSakitList = sakitList;
+                cacheAlfaList = alfaList;
+
+                document.getElementById('statHadir').innerText = hadirList.length;
+                document.getElementById('statIzin').innerText = izinList.length;
+                document.getElementById('statSakit').innerText = sakitList.length;
+                document.getElementById('statAlfa').innerText = alfaList.length;
+
+                renderLeaderboard(userCounts, 'adminLeaderboardList');
+
+                let memberListHTML = "";
+                daftarAnggotaOSIS.forEach((m, idx) => {
+                    memberListHTML += `
+                        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-slate-900">${idx+1}. ${m.nama}</p>
+                                <p class="text-[10px] text-slate-500">Kelas: ${m.kelas}</p>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="showMemberDetail('${m.nama}')" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-xl font-semibold">Detail</button>
+                                <button onclick="adminResetSandi('${m.nama}')" class="text-xs bg-amber-600 text-white px-2.5 py-1.5 rounded-xl font-semibold">Reset Sandi</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('adminMemberList').innerHTML = memberListHTML;
+
+            } catch (e) {
+                console.log("Error admin data:", e);
+            }
+        }
+
+        window.showRekapDetail = function(kategori) {
+            let listData = [];
+            let warnaTitle = "text-slate-900";
+            if(kategori === 'Hadir') { listData = cacheHadirList; warnaTitle = "text-emerald-600"; }
+            else if(kategori === 'Izin') { listData = cacheIzinList; warnaTitle = "text-blue-600"; }
+            else if(kategori === 'Sakit') { listData = cacheSakitList; warnaTitle = "text-amber-600"; }
+            else if(kategori === 'Alfa') { listData = cacheAlfaList; warnaTitle = "text-rose-600"; }
+
+            let htmlItems = "";
+            if (listData.length === 0) {
+                htmlItems = "<p class='text-slate-400 text-center py-4'>Tidak ada data dalam kategori ini.</p>";
+            } else {
+                listData.forEach((item, idx) => {
+                    htmlItems += `<div class="bg-slate-50 p-2 rounded-xl border border-slate-200 font-medium text-slate-800">${idx+1}. ${item}</div>`;
+                });
+            }
+
+            document.getElementById('modalTitle').innerText = `Daftar Anggota Status: ${kategori}`;
+            document.getElementById('modalContent').innerHTML = `
+                <div class="space-y-2">
+                    <p class="font-bold ${warnaTitle} text-sm mb-2">Total: ${listData.length} Orang</p>
+                    <div class="max-h-64 overflow-y-auto space-y-1">${htmlItems}</div>
+                </div>
+            `;
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        window.showMemberDetail = function(namaAnggota) {
+            const now = Date.now();
+            const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+            const oneMonthMs = 30 * 24 * 60 * 60 * 1000;
+
+            let hWeek = 0, iWeek = 0, sWeek = 0;
+            let hMonth = 0, iMonth = 0, sMonth = 0;
+            let fotoBuktiHTML = "<p class='text-slate-400 text-xs'>Belum ada foto bukti absen.</p>";
+
+            allAttendanceCache.forEach(d => {
+                if (d.nama === namaAnggota) {
+                    const selisih = now - d.timestamp;
+                    if (selisih <= oneWeekMs) {
+                        if (d.status === 'Hadir') hWeek++;
+                        if (d.status === 'Izin') iWeek++;
+                        if (d.status === 'Sakit') sWeek++;
+                    }
+                    if (selisih <= oneMonthMs) {
+                        if (d.status === 'Hadir') hMonth++;
+                        if (d.status === 'Izin') iMonth++;
+                        if (d.status === 'Sakit') sMonth++;
+                    }
+
+                    if (d.foto) {
+                        fotoBuktiHTML = `
+                            <div class="flex flex-col items-center space-y-2">
+                                <img src="${d.foto}" class="w-36 h-36 object-cover rounded-2xl border border-slate-300 shadow-sm">
+                                <span class="text-[10px] text-slate-500 font-medium">Waktu: ${d.waktu}</span>
+                                <a href="${d.foto}" download="Bukti_Absen_${formatSafeName(namaAnggota)}.jpg" class="px-4 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow">📥 Download Foto Bukti</a>
+                            </div>
+                        `;
+                    }
+                }
+            });
+
+            document.getElementById('modalTitle').innerText = `Statistik: ${namaAnggota}`;
+            document.getElementById('modalContent').innerHTML = `
+                <div class="space-y-3">
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                        <p class="font-bold text-slate-900 mb-2">📅 Statistik 1 Minggu</p>
+                        <div class="grid grid-cols-3 gap-1 text-center">
+                            <div class="bg-white p-2 rounded-xl border"><span class="block text-[9px] text-emerald-600 font-bold">Hadir</span><span class="font-bold text-sm text-slate-900">${hWeek}</span></div>
+                            <div class="bg-white p-2 rounded-xl border"><span class="block text-[9px] text-blue-600 font-bold">Izin</span><span class="font-bold text-sm text-slate-900">${iWeek}</span></div>
+                            <div class="bg-white p-2 rounded-xl border"><span class="block text-[9px] text-amber-600 font-bold">Sakit</span><span class="font-bold text-sm text-slate-900">${sWeek}</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                        <p class="font-bold text-slate-900 mb-2">📊 Statistik 1 Bulan</p>
+                        <div class="grid grid-cols-3 gap-1 text-center">
+                            <div class="bg-white p-2 rounded-xl border"><span class="block text-[9px] text-emerald-600 font-bold">Hadir</span><span class="font-bold text-sm text-slate-900">${hMonth}</span></div>
+                            <div class="bg-white p-2 rounded-xl border"><span class="block text-[9px] text-blue-600 font-bold">Izin</span><span class="font-bold text-sm text-slate-900">${iMonth}</span></div>
+                            <div class="bg-white p-2 rounded-xl border"><span class="block text-[9px] text-amber-600 font-bold">Sakit</span><span class="font-bold text-sm text-slate-900">${sMonth}</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-center space-y-2">
+                        <p class="font-bold text-slate-900">📸 Bukti Foto Wajah (Stempel Waktu)</p>
+                        ${fotoBuktiHTML}
+                    </div>
+                </div>
+            `;
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        window.closeModal = function() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        window.adminResetSandi = async function(namaAnggota) {
+            const sandiBaru = prompt(`Masukkan sandi baru untuk ${namaAnggota}:`, "osis123");
+            if (!sandiBaru) return;
+
+            try {
+                await setDoc(doc(db, "pengaturan_osis", `user_${formatSafeName(namaAnggota)}`), { password: sandiBaru }, { merge: true });
+                showPopup("Berhasil", `Kata sandi untuk ${namaAnggota} berhasil diubah.`, "success");
+            } catch(e) {
+                showPopup("Gagal", "Gagal mereset sandi: " + e.message, "error");
+            }
+        }
+
+        window.openLupaSandiModal = function() {
+            document.getElementById('lupaSandiModal').classList.remove('hidden');
+        }
+        window.closeLupaSandiModal = function() {
+            document.getElementById('lupaSandiModal').classList.add('hidden');
+        }
+        window.prosesResetSandiMandiri = async function() {
+            const nama = document.getElementById('resetNamaInput').value.trim();
+            const sandiBaru = document.getElementById('resetSandiBaru').value.trim();
+
+            if(!nama || !sandiBaru) {
+                showPopup("Perhatian", "Mohon isi nama dan sandi baru.", "error");
+                return;
+            }
+
+            const matched = daftarAnggotaOSIS.find(m => m.nama.toLowerCase() === nama.toLowerCase());
+            if(!matched) {
+                showPopup("Gagal", "Nama tidak terdaftar sebagai anggota OSIS.", "error");
+                return;
+            }
+
+            try {
+                await setDoc(doc(db, "pengaturan_osis", `user_${formatSafeName(matched.nama)}`), { password: sandiBaru }, { merge: true });
+                closeLupaSandiModal();
+                showPopup("Berhasil", "Kata sandi Anda berhasil diubah! Silakan login kembali.", "success");
+            } catch(e) {
+                showPopup("Gagal", "Gagal mengubah sandi: " + e.message, "error");
+            }
+        }
+    </script>
+</body>
+</html>
